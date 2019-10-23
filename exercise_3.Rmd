@@ -1,0 +1,61 @@
+---
+title: "Exercise 3"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(janitor)
+library(jtools)
+library(magrittr)
+library(plm)
+library(broom)
+library(openintro)
+library(ggrepel)
+library(kableExtra)
+```
+
+```{r}
+eval <- read_csv("TeachingEval_HW.csv") %>% 
+  clean_names() %>% 
+  mutate(instr_id = factor(instr_id),
+         course_id = factor(course_id),
+         required = factor(required),
+         year = factor(year),
+         a_pct = apct)
+```
+
+### (a)
+
+```{r}
+eval %$% 
+  lm(eval ~ enrollment + required + a_pct) %>% 
+  summ(digits = 4)
+```
+
+### (b)
+
+### (c)
+
+```{r}
+plm(eval ~ enrollment + required + a_pct, 
+    data = eval, index = "instr_id", model = "within") %>% 
+  summary()
+```
+
+### (d)
+
+```{r}
+plm(eval ~ enrollment + required + a_pct + instr_id, 
+    data = eval, index = "year", model = "within") %>%
+  tidy() %>% 
+  slice(1:3)
+```
+

@@ -1,0 +1,139 @@
+---
+title: "Exercise 6"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(janitor)
+library(jtools)
+library(magrittr)
+library(plm)
+library(broom)
+library(kableExtra)
+```
+
+```{r}
+cell <- read_csv("Cellphone_Panel_homework.csv") %>% 
+  clean_names() %>% 
+  mutate(state = factor(state),
+         year = factor(year))
+  
+```
+
+### (a)
+
+```{r}
+cell %$% 
+  lm(deaths_per_billion_miles ~ cell_ban + text_ban) %>% 
+  summ()
+```
+
+### (b)
+
+### (c)
+
+```{r}
+plm(deaths_per_billion_miles ~ cell_ban + text_ban,
+    data = cell, index = "state", model = "within") %>% 
+  tidy()
+```
+
+### (d)
+
+### (e)
+
+```{r}
+plm(deaths_per_billion_miles ~ cell_ban + text_ban,
+    data = cell, index = c("state", "year"), model = "within", effect = "twoways") %>% 
+  tidy() 
+
+plm(deaths_per_billion_miles ~ cell_ban + text_ban + year,
+    data = cell, index = c("state"), model = "within") %>% 
+  tidy()
+```
+
+```{r}
+cell %>% 
+  group_by(year) %>% 
+  summarize(Pct_Cell = mean(cell_ban),
+            Pct_Text = mean(text_ban),
+            Death = mean(deaths_per_billion_miles)) 
+```
+
+### (f)
+
+```{r}
+plm(deaths_per_billion_miles ~ cell_ban + text_ban + urban_percent + cell_per10thous_pop + year,
+    data = cell, index = c("state", "year"), model = "within") %>% 
+  tidy() 
+```
+
+### (g)
+
+```{r}
+cell %$% 
+  lm(deaths_per_billion_miles ~ cell_ban + text_ban + 
+       year + state + urban_percent + cell_per10thous_pop) %>% 
+  tidy() 
+
+plm(deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = cell, 
+    index = c("year", "state"), model = "within", effect = "twoways") %>% 
+  tidy()
+```
+
+### (h)
+
+
+```{r}
+plm(deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = cell, 
+    index = c("year", "state"), model = "within", effect = "twoways") %>% 
+  tidy()
+
+plm(deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = cell, 
+    index = c("year", "state"), model = "within", effect = "twoways") %>% 
+  glance()
+
+plm(deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = cell, 
+    index = c("year", "state"), model = "within", effect = "twoways") %>% 
+  augment()
+
+
+plm(deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = cell, 
+    index = c("state", "year"), model = "within", effect = "twoways") %>% 
+  fixef() %>% 
+  as_tibble() %>% 
+  mutate(state = cell$state[1:51], 
+         fixed_effect = scale(value, scale = FALSE)) %>% 
+  select(state, fixed_effect) %>% 
+  top_n(5)
+
+plm(deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = cell, 
+    index = c("state", "year"), model = "within", effect = "twoways") %>% 
+  fixef() %>% 
+  as_tibble() %>% 
+  mutate(state = cell$state[1:51], 
+         fixed_effect = scale(value, scale = FALSE)) %>% 
+  select(state, fixed_effect) %>% 
+  top_n(-5)
+```
+

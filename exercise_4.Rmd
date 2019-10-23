@@ -1,0 +1,109 @@
+---
+title: "Exercise 4"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(janitor)
+library(jtools)
+library(magrittr)
+library(plm)
+library(broom)
+library(openintro)
+library(ggrepel)
+library(kableExtra)
+```
+
+```{r}
+hope <- read_csv("HOPE_HW.csv") %>% 
+  clean_names() %>% 
+  mutate(year = factor(year))
+  #        state = factor(state_code),
+  #        georgia = factor(georgia),
+  #        after_georgia = factor(after_georgia),
+  #        after = factor(after),
+  #        in_college = factor(in_college),
+  #        low_income = factor(low_income),
+  #        age_18 = factor(age18),
+  #        black = factor(black))
+```
+
+### (a)
+
+```{r}
+hope %$% 
+  lm(in_college ~ georgia*after) %>% 
+  summ(digits = 4)
+```
+
+### (b)
+
+```{r}
+hope %>% 
+  group_by(georgia, after) %>% 
+  summarize(percent = mean(in_college)) 
+```
+
+```{r}
+hope %$% 
+  lm(in_college ~ georgia*after) %>% 
+  tidy() %>% 
+  select(term, estimate) %>% 
+  summarize(before_non_georgia = estimate[1],
+            after_non_georgia = estimate[1] + estimate[3],
+            before_georgia = estimate[1] + estimate[2],
+            after_georgia = sum(estimate[1:4]))
+```
+
+### (c)
+
+```{r}
+hope %>% 
+  ggplot(aes(x = after, y = in_college, color = factor(georgia))) +
+  geom_smooth(method = "lm", se = FALSE) +
+  xlab("Time") + 
+  ylab("Percent in College") +
+  expand_limits(x = 0, y = 0) +
+  labs(color = "Georgia")
+```
+
+### (d)
+
+```{r}
+plm(in_college ~ after_georgia + year, 
+    data = hope, index = "state_code", model = "within") %>% 
+  tidy() %>% 
+  slice(1)
+```
+
+### (e)
+
+```{r}
+plm(in_college ~ after_georgia + age18 + black + year, 
+    data = hope, index = "state_code", model = "within") %>% 
+  tidy() %>% 
+  slice(1:3)
+```
+
+### (f)
+
+```{r}
+hope %$% 
+  lm(in_college ~ low_income + age18 + black + after * georgia) %>% 
+  summ(digits = 4)
+
+plm(in_college ~ low_income + after_georgia + age18 + black + year, 
+    data = hope, index = "state_code", model = "within") %>% 
+  tidy() %>% 
+  slice(1:4)
+```
+
+

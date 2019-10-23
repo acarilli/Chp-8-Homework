@@ -1,0 +1,71 @@
+---
+title: "Exercise 5"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(janitor)
+library(jtools)
+library(magrittr)
+library(plm)
+library(broom)
+library(kableExtra)
+```
+
+```{r}
+texas <- read_csv("TexasSchoolBoard.csv") %>% 
+  clean_names() %>% 
+  mutate(year = factor(year),
+         dist_number = factor(dist_number))
+```
+
+### (a)
+
+```{r}
+texas %$% 
+  lm(ln_avg_salary ~ on_cycle) %>% 
+  summ()
+```
+
+### (b)
+
+```{r}
+texas %$% 
+  lm(ln_avg_salary ~ after_switch*cycle_switch) %>% 
+  summ(digits = 4)
+```
+
+### (c)
+
+```{r}
+plm(ln_avg_salary ~ on_cycle, data = texas, index = "dist_number", model = "within") %>% 
+  tidy()
+```
+
+### (d)
+
+```{r}
+plm(ln_avg_salary ~ on_cycle + year, data = texas, index = "dist_number", model = "within") %>% 
+  tidy()
+```
+
+### (e)
+
+```{r}
+plm(ln_avg_salary ~ on_cycle + year, data = texas %>% 
+      filter(year %in% c("2007", "2008", "2009")),
+    index = "dist_number", model = "within") %>% 
+  tidy()
+```
+
+
+
+

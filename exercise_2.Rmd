@@ -1,0 +1,99 @@
+---
+title: "Exercise 2"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(janitor)
+library(jtools)
+library(magrittr)
+library(plm)
+library(broom)
+library(openintro)
+library(ggrepel)
+library(kableExtra)
+```
+
+```{r}
+peace <- read_csv("PeaceCorpsHW.csv") %>% 
+  clean_names() %>% 
+  rename(unem_rate = unemployrate,
+         apps_pc = appspc) %>% 
+  mutate(state_short = state2abbr(state),
+         year = factor(year),
+         state = factor(state)) %>% 
+  select(state, year, state_short, apps_pc, unem_rate)
+```
+
+### (a)
+
+
+### (b)
+
+```{r}
+peace %$% 
+  lm(apps_pc ~ unem_rate + year) %>% 
+  summ()
+```
+
+### (c)
+
+```{r}
+peace %>% 
+  ggplot(aes(x = unem_rate, y = apps_pc, color = state)) +
+  geom_point() + 
+  geom_text(aes(label = state_short)) +
+  theme(legend.position = "none") +
+  xlab("State unemployment rate") + 
+  ylab("Peace Corps applications")
+```
+
+```{r}
+peace %>% 
+  filter(state_short != "DC") %>% 
+  ggplot(aes(x = unem_rate, y = apps_pc, color = state)) +
+  geom_point() + 
+  geom_text(aes(label = state_short)) +
+  theme(legend.position = "none") + 
+  xlab("State unemployment rate") + 
+  ylab("Peace Corps applications")
+```
+
+
+### (d)
+
+```{r}
+peace %>% 
+  filter(state_short != "DC") %$% 
+  lm(apps_pc ~ unem_rate + year) %>% 
+  summ()
+```
+
+### (e)
+
+```{r}
+peace %>% 
+  filter(state_short != "DC") %$% 
+  lm(apps_pc ~ unem_rate + state + year) %>% 
+  summ()
+```
+
+### (f)
+
+```{r}
+peace_no_dc <- 
+  peace %>% 
+  filter(state_short != "DC")
+
+plm(apps_pc ~ unem_rate + year, data = peace_no_dc, index = "state", model = "within") %>% 
+  summary() 
+```
+
