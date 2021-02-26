@@ -1,7 +1,7 @@
 ---
 title: "Exercise 1"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
@@ -12,32 +12,30 @@ output:
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(janitor)
-library(jtools)
-library(magrittr)
 library(plm)
-library(broom)
 ```
 
-```{r}
-pres_app <- read_csv("presapproval_HW_edited.csv") %>% 
-  clean_names()
+```{r 1data}
+pres_app <- 
+  here::here("data", "presapproval_HW_edited.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names()
 ```
 
 ### (a)
 
-```{r}
-pres_app %$% 
-  lm(pres_approv ~ unem_pct) %>% 
-  summ()
+```{r 1a}
+pres_app %>% 
+  lm(pres_approv ~ unem_pct, .) %>% 
+  jtools::summ()
 ```
 
 ### (b)
 
-```{r}
-pres_app %$% 
-  lm(pres_approv ~ unem_pct + south) %>% 
-  summ()
+```{r 1b} 
+pres_app %>% 
+  lm(pres_approv ~ unem_pct + south, .) %>% 
+  jtools::summ()
 ```
 
 ### (c)
@@ -45,30 +43,32 @@ pres_app %$%
 ```{r}
 pres_app %>% 
   mutate(unem_pct = scale(unem_pct, scale = F),
-         pres_approv = scale(pres_approv, scale = F)) %$% 
-  lm(pres_approv ~ unem_pct + factor(state)) %>% 
+         pres_approv = scale(pres_approv, scale = F)) %>% 
+  lm(pres_approv ~ unem_pct + factor(state), .) %>% 
+  jtools::summ()
+
+pres_app %>% 
+plm(pres_approv ~ unem_pct, ., index = "state", model = "within") %>% 
   summary()
 
-plm(pres_approv ~ unem_pct, data = pres_app, index = "state", model = "within") %>% 
-  summary()
-
-pres_app %$% 
-  lm(pres_approv ~ unem_pct + factor(state)) %>% 
-  summ(center = TRUE, transform.response = TRUE)
+pres_app %>% 
+  lm(pres_approv ~ unem_pct + factor(state), .) %>% 
+  jtools::summ(center = TRUE, transform.response = TRUE)
 ```
 
 ### (d)
 
 ```{r}
-pres_app %$% 
-  lm(pres_approv ~ unem_pct + factor(state)) %>% 
-  summ()
+pres_app %>% 
+  lm(pres_approv ~ unem_pct + factor(state), .) %>% 
+  jtools::summ()
 ```
 
 ### (e)
 
 ```{r}
-plm(pres_approv ~ unem_pct + factor(year), data = pres_app, index = "state", model = "within") %>% 
+pres_app %>% 
+plm(pres_approv ~ unem_pct + factor(year), ., index = "state", model = "within") %>% 
   summary()
 ```
 

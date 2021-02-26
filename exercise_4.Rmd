@@ -1,30 +1,27 @@
 ---
 title: "Exercise 4"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
     highlight: tango
+    code_folding: hide
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(janitor)
-library(jtools)
-library(magrittr)
 library(plm)
-library(broom)
-library(openintro)
-library(ggrepel)
-library(kableExtra)
 ```
 
-```{r}
-hope <- read_csv("HOPE_HW.csv") %>% 
-  clean_names() %>% 
+```{r 4data}
+hope <- 
+  here::here("data", "HOPE_HW.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
   mutate(year = factor(year))
   #        state = factor(state_code),
   #        georgia = factor(georgia),
@@ -38,24 +35,37 @@ hope <- read_csv("HOPE_HW.csv") %>%
 
 ### (a)
 
-```{r}
-hope %$% 
-  lm(in_college ~ georgia*after) %>% 
-  summ(digits = 4)
+```{r 4a}
+hope %>% 
+  lm(in_college ~ georgia * after , .) %>% 
+  jtools::summ(digits = 4)
 ```
+
+equatiomatic
+
+```{r equatiomatic, results='asis'}
+hope %>% 
+  lm(in_college ~ georgia * after , .) %>% 
+  equatiomatic::extract_eq(intercept = "beta",
+                           use_coefs = TRUE,
+                           coef_digits = 4,
+                           ital_vars = TRUE)
+
+```
+
 
 ### (b)
 
-```{r}
+```{r 4b1}
 hope %>% 
   group_by(georgia, after) %>% 
   summarize(percent = mean(in_college)) 
 ```
 
-```{r}
-hope %$% 
-  lm(in_college ~ georgia*after) %>% 
-  tidy() %>% 
+```{r 4b2}
+hope %>% 
+  lm(in_college ~ georgia * after, .) %>% 
+  broom::tidy() %>% 
   select(term, estimate) %>% 
   summarize(before_non_georgia = estimate[1],
             after_non_georgia = estimate[1] + estimate[3],
@@ -65,7 +75,7 @@ hope %$%
 
 ### (c)
 
-```{r}
+```{r 4c}
 hope %>% 
   ggplot(aes(x = after, y = in_college, color = factor(georgia))) +
   geom_smooth(method = "lm", se = FALSE) +
@@ -77,32 +87,35 @@ hope %>%
 
 ### (d)
 
-```{r}
-plm(in_college ~ after_georgia + year, 
-    data = hope, index = "state_code", model = "within") %>% 
-  tidy() %>% 
+```{r 4d}
+hope %>% 
+plm(in_college ~ after_georgia + year, ., 
+    index = "state_code", model = "within") %>% 
+  broom::tidy() %>% 
   slice(1)
 ```
 
 ### (e)
 
-```{r}
-plm(in_college ~ after_georgia + age18 + black + year, 
-    data = hope, index = "state_code", model = "within") %>% 
-  tidy() %>% 
+```{r 4e}
+hope %>% 
+plm(in_college ~ after_georgia + age18 + black + year, .,
+    index = "state_code", model = "within") %>% 
+  broom::tidy() %>% 
   slice(1:3)
 ```
 
 ### (f)
 
-```{r}
-hope %$% 
-  lm(in_college ~ low_income + age18 + black + after * georgia) %>% 
-  summ(digits = 4)
+```{r 4f}
+hope %>% 
+  lm(in_college ~ low_income + age18 + black + after * georgia, .) %>% 
+  jtools::summ(digits = 4)
 
-plm(in_college ~ low_income + after_georgia + age18 + black + year, 
-    data = hope, index = "state_code", model = "within") %>% 
-  tidy() %>% 
+hope %>% 
+plm(in_college ~ low_income + after_georgia + age18 + black + year, .,
+    index = "state_code", model = "within") %>% 
+  broom::tidy() %>% 
   slice(1:4)
 ```
 

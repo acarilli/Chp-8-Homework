@@ -1,0 +1,507 @@
+---
+title: "Chapter 8 Homework"
+author: "Carilli"
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
+output: 
+  html_document:
+    toc:  false
+    toc_float: false
+    df_print: paged
+    theme: cerulean
+    highlight: tango
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(plm)
+```
+
+# Exercises {.tabset}
+
+## 1 {.tabset}
+
+```{r 1data}
+pres_app <- 
+  here::here("data", "presapproval_HW_edited.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names()
+```
+
+### (a)
+
+```{r 1a}
+pres_app %>% 
+  lm(pres_approv ~ unem_pct, .) %>% 
+  jtools::summ()
+```
+
+### (b)
+
+```{r 1b} 
+pres_app %>% 
+  lm(pres_approv ~ unem_pct + south, .) %>% 
+  jtools::summ()
+```
+
+### (c)
+
+```{r}
+pres_app %>% 
+  mutate(unem_pct = scale(unem_pct, scale = F),
+         pres_approv = scale(pres_approv, scale = F)) %>% 
+  lm(pres_approv ~ unem_pct + factor(state), .) %>% 
+  jtools::summ()
+
+pres_app %>% 
+plm(pres_approv ~ unem_pct, ., index = "state", model = "within") %>% 
+  summary()
+
+pres_app %>% 
+  lm(pres_approv ~ unem_pct + factor(state), .) %>% 
+  jtools::summ(center = TRUE, transform.response = TRUE)
+```
+
+### (d)
+
+```{r}
+pres_app %>% 
+  lm(pres_approv ~ unem_pct + factor(state), .) %>% 
+  jtools::summ()
+```
+
+### (e)
+
+```{r}
+pres_app %>% 
+plm(pres_approv ~ unem_pct + factor(year), ., index = "state", model = "within") %>% 
+  summary()
+```
+
+
+## 2 {.tabset}
+```{r 2data}
+peace <- 
+  here::here("data","PeaceCorpsHW.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
+  rename(unem_rate = unemployrate,
+         apps_pc = appspc) %>% 
+  mutate(state_short = usdata::state2abbr(stcode),
+         year = factor(year),
+         state = factor(state)) %>% 
+  select(state, year, state_short, apps_pc, unem_rate)
+```
+
+### (a)
+
+
+### (b)
+
+```{r 2b}
+peace %>% 
+  lm(apps_pc ~ unem_rate + year, .) %>% 
+  jtools::summ()
+```
+
+### (c)
+
+```{r 2c}
+peace %>% 
+  ggplot(aes(x = unem_rate, y = apps_pc, color = state)) +
+  geom_point() + 
+  geom_text(aes(label = state_short)) +
+  theme(legend.position = "none") +
+  xlab("State unemployment rate") + 
+  ylab("Peace Corps applications")
+```
+
+```{r 2c2}
+peace %>% 
+  filter(state_short != "DC") %>% 
+  ggplot(aes(x = unem_rate, y = apps_pc, color = state)) +
+  geom_point() + 
+  geom_text(aes(label = state_short)) +
+  theme(legend.position = "none") + 
+  xlab("State unemployment rate") + 
+  ylab("Peace Corps applications")
+```
+
+
+### (d)
+
+```{r 2d}
+peace %>% 
+  filter(state_short != "DC") %>% 
+  lm(apps_pc ~ unem_rate + year, .) %>% 
+  jtools::summ()
+```
+
+### (e)
+
+```{r 2e}
+peace %>% 
+  filter(state_short != "DC") %>% 
+  lm(apps_pc ~ unem_rate + state + year, .) %>% 
+  jtools::summ()
+```
+
+### (f)
+
+```{r 2f}
+peace %>% 
+  filter(state_short != "DC") %>% 
+  plm(apps_pc ~ unem_rate + year, ., index = "state", model = "within") %>% 
+  summary() 
+```
+## 3 {.tabset}
+```{r 3data}
+eval <- 
+  here::here("data", "TeachingEval_HW.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
+  mutate(instr_id = factor(instr_id),
+         course_id = factor(course_id),
+         required = factor(required),
+         year = factor(year),
+         a_pct = apct)
+```
+
+### (a)
+
+```{r 3a}
+eval %>% 
+  lm(eval ~ enrollment + required + a_pct, .) %>% 
+  jtools::summ(digits = 4)
+```
+
+### (b)
+
+### (c)
+
+```{r 3c}
+eval %>% 
+plm(eval ~ enrollment + required + a_pct, .,
+   index = "instr_id", model = "within") %>% 
+  summary()
+```
+
+### (d)
+
+```{r 3d}
+eval %>% 
+plm(eval ~ enrollment + required + a_pct + instr_id, .,
+    index = "year", model = "within") %>%
+  broom::tidy() %>% 
+  slice(1:3)
+```
+
+
+## 4 {.tabset}
+```{r 4data}
+hope <- 
+  here::here("data", "HOPE_HW.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
+  mutate(year = factor(year))
+  #        state = factor(state_code),
+  #        georgia = factor(georgia),
+  #        after_georgia = factor(after_georgia),
+  #        after = factor(after),
+  #        in_college = factor(in_college),
+  #        low_income = factor(low_income),
+  #        age_18 = factor(age18),
+  #        black = factor(black))
+```
+
+### (a)
+
+```{r 4a}
+hope %>% 
+  lm(in_college ~ georgia * after , .) %>% 
+  jtools::summ(digits = 4)
+```
+
+### (b)
+
+```{r 4b1}
+hope %>% 
+  group_by(georgia, after) %>% 
+  summarize(percent = mean(in_college)) 
+```
+
+```{r 4b2}
+hope %>% 
+  lm(in_college ~ georgia * after, .) %>% 
+  broom::tidy() %>% 
+  select(term, estimate) %>% 
+  summarize(before_non_georgia = estimate[1],
+            after_non_georgia = estimate[1] + estimate[3],
+            before_georgia = estimate[1] + estimate[2],
+            after_georgia = sum(estimate[1:4]))
+```
+
+### (c)
+
+```{r 4c}
+hope %>% 
+  ggplot(aes(x = after, y = in_college, color = factor(georgia))) +
+  geom_smooth(method = "lm", se = FALSE) +
+  xlab("Time") + 
+  ylab("Percent in College") +
+  expand_limits(x = 0, y = 0) +
+  labs(color = "Georgia")
+```
+
+### (d)
+
+```{r 4d}
+hope %>% 
+plm(in_college ~ after_georgia + year, ., 
+    index = "state_code", model = "within") %>% 
+  broom::tidy() %>% 
+  slice(1)
+```
+
+### (e)
+
+```{r 4e}
+hope %>% 
+plm(in_college ~ after_georgia + age18 + black + year, .,
+    index = "state_code", model = "within") %>% 
+  broom::tidy() %>% 
+  slice(1:3)
+```
+
+### (f)
+
+```{r 4f}
+hope %>% 
+  lm(in_college ~ low_income + age18 + black + after * georgia, .) %>% 
+  jtools::summ(digits = 4)
+
+hope %>% 
+plm(in_college ~ low_income + after_georgia + age18 + black + year, .,
+    index = "state_code", model = "within") %>% 
+  broom::tidy() %>% 
+  slice(1:4)
+```
+
+
+## 5 {.tabset}
+
+```{r 5data}
+texas <- 
+  here::here("data", "TexasSchoolBoard.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
+  mutate(year = factor(year),
+         dist_number = factor(dist_number))
+```
+
+### (a)
+
+```{r 5a}
+texas %>% 
+  lm(ln_avg_salary ~ on_cycle, .) %>% 
+  jtools::summ()
+```
+
+### (b)
+
+```{r 5b}
+texas %>% 
+  lm(ln_avg_salary ~ after_switch * cycle_switch, .) %>% 
+  jtools::summ(digits = 4)
+```
+
+### (c)
+
+```{r 5c}
+texas %>% 
+  plm(ln_avg_salary ~ on_cycle, ., 
+    index = "dist_number", model = "within") %>% 
+  broom::tidy()
+```
+
+### (d)
+
+```{r 5d}
+texas %>% 
+  plm(ln_avg_salary ~ on_cycle + year, .,
+    index = "dist_number", model = "within") %>% 
+  broom::tidy()
+```
+
+### (e)
+
+```{r 5e}
+texas %>%
+  filter(year %in% c("2007", "2008" , "2009")) %>%
+  plm(ln_avg_salary ~ on_cycle + year,
+      .,
+      index = "dist_number",
+      model = "within") %>%
+  broom::tidy()
+```
+
+## 6 {.tabset}
+```{r 6data}
+cell <- 
+  here::here("data", "Cellphone_Panel_homework.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
+  mutate(state = factor(state),
+         year = factor(year))
+
+```
+
+### (a)
+
+```{r 6a}
+cell %>% 
+  lm(deaths_per_billion_miles ~ cell_ban + text_ban, .) %>% 
+  jtools::summ()
+```
+
+### (b)
+
+### (c)
+
+```{r 6c}
+cell %>% 
+plm(deaths_per_billion_miles ~ cell_ban + text_ban,
+    data = ., index = "state", model = "within") %>% 
+  broom::tidy()
+```
+
+### (d)
+
+### (e)
+
+```{r 6e}
+cell %>% 
+  plm(deaths_per_billion_miles ~ cell_ban + text_ban, .,
+      index = c("state", "year"), model = "within", effect = "twoways") %>% 
+  broom::tidy() 
+
+cell %>% 
+  plm(deaths_per_billion_miles ~ cell_ban + text_ban + year, .,
+      index = c("state"), model = "within") %>% 
+  broom::tidy()
+```
+
+```{r 6e-2}
+cell %>% 
+  group_by(year) %>% 
+  summarize(Pct_Cell = mean(cell_ban),
+            Pct_Text = mean(text_ban),
+            Death = mean(deaths_per_billion_miles)) 
+```
+
+### (f)
+
+```{r 6f}
+cell %>% 
+  plm(deaths_per_billion_miles ~ cell_ban + text_ban + urban_percent + 
+        cell_per10thous_pop + year,
+    data = ., index = c("state", "year"), model = "within") %>% 
+  broom::tidy() 
+```
+
+### (g)
+
+```{r 6g}
+cell %>%
+  lm(
+    deaths_per_billion_miles ~ cell_ban + text_ban +
+      year + state + urban_percent + cell_per10thous_pop,
+    .
+  ) %>%
+  broom::tidy() 
+
+cell %>%
+  plm(
+    deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = .,
+    index = c("year", "state"),
+    model = "within",
+    effect = "twoways"
+  ) %>%
+  broom::tidy()
+```
+
+### (h)
+
+
+```{r 6h}
+
+cell %>%
+  plm(
+    deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = .,
+    index = c("year", "state"),
+    model = "within",
+    effect = "twoways"
+  ) %>%
+  broom::tidy()
+
+cell %>%
+  plm(
+    deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = .,
+    index = c("year", "state"),
+    model = "within",
+    effect = "twoways"
+  ) %>%
+  broom::glance()
+
+cell %>%
+  plm(
+    deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = .,
+    index = c("year", "state"),
+    model = "within",
+    effect = "twoways"
+  ) %>%
+  broom::augment()
+
+
+cell %>%
+  plm(
+    deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = .,
+    index = c("state", "year"),
+    model = "within",
+    effect = "twoways"
+  ) %>%
+  fixef() %>%
+  as_tibble() %>%
+  mutate(state = cell$state[1:51],
+         fixed_effect = scale(value, scale = FALSE)) %>%
+  select(state, fixed_effect) %>%
+  top_n(5)
+
+cell %>%
+  plm(
+    deaths_per_billion_miles ~ cell_ban + text_ban +
+      cell_per10thous_pop + urban_percent,
+    data = .,
+    index = c("state", "year"),
+    model = "within",
+    effect = "twoways"
+  ) %>%
+  fixef() %>%
+  as_tibble() %>%
+  mutate(state = cell$state[1:51],
+         fixed_effect = scale(value, scale = FALSE)) %>%
+  select(state, fixed_effect) %>%
+  top_n(-5)
+```

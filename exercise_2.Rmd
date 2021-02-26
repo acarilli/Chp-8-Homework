@@ -1,7 +1,7 @@
 ---
 title: "Exercise 2"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
@@ -12,22 +12,17 @@ output:
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(janitor)
-library(jtools)
-library(magrittr)
 library(plm)
-library(broom)
-library(openintro)
-library(ggrepel)
-library(kableExtra)
 ```
 
-```{r}
-peace <- read_csv("PeaceCorpsHW.csv") %>% 
-  clean_names() %>% 
+```{r 2data}
+peace <- 
+  here::here("data","PeaceCorpsHW.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
   rename(unem_rate = unemployrate,
          apps_pc = appspc) %>% 
-  mutate(state_short = state2abbr(state),
+  mutate(state_short = usdata::state2abbr(stcode),
          year = factor(year),
          state = factor(state)) %>% 
   select(state, year, state_short, apps_pc, unem_rate)
@@ -38,15 +33,15 @@ peace <- read_csv("PeaceCorpsHW.csv") %>%
 
 ### (b)
 
-```{r}
-peace %$% 
-  lm(apps_pc ~ unem_rate + year) %>% 
-  summ()
+```{r 2b}
+peace %>% 
+  lm(apps_pc ~ unem_rate + year, .) %>% 
+  jtools::summ()
 ```
 
 ### (c)
 
-```{r}
+```{r 2c}
 peace %>% 
   ggplot(aes(x = unem_rate, y = apps_pc, color = state)) +
   geom_point() + 
@@ -56,7 +51,7 @@ peace %>%
   ylab("Peace Corps applications")
 ```
 
-```{r}
+```{r 2c2}
 peace %>% 
   filter(state_short != "DC") %>% 
   ggplot(aes(x = unem_rate, y = apps_pc, color = state)) +
@@ -70,30 +65,28 @@ peace %>%
 
 ### (d)
 
-```{r}
+```{r 2d}
 peace %>% 
-  filter(state_short != "DC") %$% 
-  lm(apps_pc ~ unem_rate + year) %>% 
-  summ()
+  filter(state_short != "DC") %>% 
+  lm(apps_pc ~ unem_rate + year, .) %>% 
+  jtools::summ()
 ```
 
 ### (e)
 
-```{r}
+```{r 2e}
 peace %>% 
-  filter(state_short != "DC") %$% 
-  lm(apps_pc ~ unem_rate + state + year) %>% 
-  summ()
+  filter(state_short != "DC") %>% 
+  lm(apps_pc ~ unem_rate + state + year, .) %>% 
+  jtools::summ()
 ```
 
 ### (f)
 
-```{r}
-peace_no_dc <- 
-  peace %>% 
-  filter(state_short != "DC")
-
-plm(apps_pc ~ unem_rate + year, data = peace_no_dc, index = "state", model = "within") %>% 
+```{r 2f}
+peace %>% 
+  filter(state_short != "DC") %>% 
+  plm(apps_pc ~ unem_rate + year, ., index = "state", model = "within") %>% 
   summary() 
 ```
 

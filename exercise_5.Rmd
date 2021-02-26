@@ -1,69 +1,74 @@
 ---
 title: "Exercise 5"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
     highlight: tango
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(janitor)
-library(jtools)
-library(magrittr)
 library(plm)
-library(broom)
-library(kableExtra)
 ```
 
-```{r}
-texas <- read_csv("TexasSchoolBoard.csv") %>% 
-  clean_names() %>% 
+```{r 5data}
+texas <- 
+  here::here("data", "TexasSchoolBoard.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
   mutate(year = factor(year),
          dist_number = factor(dist_number))
 ```
 
 ### (a)
 
-```{r}
-texas %$% 
-  lm(ln_avg_salary ~ on_cycle) %>% 
-  summ()
+```{r 5a}
+texas %>% 
+  lm(ln_avg_salary ~ on_cycle, .) %>% 
+  jtools::summ()
 ```
 
 ### (b)
 
-```{r}
-texas %$% 
-  lm(ln_avg_salary ~ after_switch*cycle_switch) %>% 
-  summ(digits = 4)
+```{r 5b}
+texas %>% 
+  lm(ln_avg_salary ~ after_switch * cycle_switch, .) %>% 
+  jtools::summ(digits = 4)
 ```
 
 ### (c)
 
-```{r}
-plm(ln_avg_salary ~ on_cycle, data = texas, index = "dist_number", model = "within") %>% 
-  tidy()
+```{r 5c}
+texas %>% 
+  plm(ln_avg_salary ~ on_cycle, ., 
+    index = "dist_number", model = "within") %>% 
+  broom::tidy()
 ```
 
 ### (d)
 
-```{r}
-plm(ln_avg_salary ~ on_cycle + year, data = texas, index = "dist_number", model = "within") %>% 
-  tidy()
+```{r 5d}
+texas %>% 
+  plm(ln_avg_salary ~ on_cycle + year, .,
+    index = "dist_number", model = "within") %>% 
+  broom::tidy()
 ```
 
 ### (e)
 
-```{r}
-plm(ln_avg_salary ~ on_cycle + year, data = texas %>% 
-      filter(year %in% c("2007", "2008", "2009")),
-    index = "dist_number", model = "within") %>% 
-  tidy()
+```{r 5e}
+texas %>%
+  filter(year %in% c("2007", "2008" , "2009")) %>%
+  plm(ln_avg_salary ~ on_cycle + year,
+      .,
+      index = "dist_number",
+      model = "within") %>%
+  broom::tidy()
 ```
 
 
