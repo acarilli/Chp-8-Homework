@@ -1,7 +1,7 @@
 ---
 title: "Exercise 3"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
@@ -12,19 +12,14 @@ output:
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(janitor)
-library(jtools)
-library(magrittr)
 library(plm)
-library(broom)
-library(openintro)
-library(ggrepel)
-library(kableExtra)
 ```
 
-```{r}
-eval <- read_csv("TeachingEval_HW.csv") %>% 
-  clean_names() %>% 
+```{r 3data}
+eval <- 
+  here::here("data", "TeachingEval_HW.csv") %>% 
+  read_csv() %>% 
+  janitor::clean_names() %>% 
   mutate(instr_id = factor(instr_id),
          course_id = factor(course_id),
          required = factor(required),
@@ -34,28 +29,30 @@ eval <- read_csv("TeachingEval_HW.csv") %>%
 
 ### (a)
 
-```{r}
-eval %$% 
-  lm(eval ~ enrollment + required + a_pct) %>% 
-  summ(digits = 4)
+```{r 3a}
+eval %>% 
+  lm(eval ~ enrollment + required + a_pct, .) %>% 
+  jtools::summ(digits = 4)
 ```
 
 ### (b)
 
 ### (c)
 
-```{r}
-plm(eval ~ enrollment + required + a_pct, 
-    data = eval, index = "instr_id", model = "within") %>% 
+```{r 3c}
+eval %>% 
+plm(eval ~ enrollment + required + a_pct, .,
+   index = "instr_id", model = "within") %>% 
   summary()
 ```
 
 ### (d)
 
-```{r}
-plm(eval ~ enrollment + required + a_pct + instr_id, 
-    data = eval, index = "year", model = "within") %>%
-  tidy() %>% 
+```{r 3d}
+eval %>% 
+plm(eval ~ enrollment + required + a_pct + instr_id, .,
+    index = "year", model = "within") %>%
+  broom::tidy() %>% 
   slice(1:3)
 ```
 
